@@ -8,6 +8,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -28,11 +29,11 @@ public class MainApp extends Application {
         launch(args);
 
 
-
     }
 
     @Override
     public void start(Stage primaryStage) {
+        primaryStage.getIcons().add(new Image("images.jpg"));
         primaryStage.setScene(initRootLayout());
         primaryStage.show();
     }
