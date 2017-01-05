@@ -5,9 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.zeroturnaround.exec.ProcessExecutor;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -26,8 +24,16 @@ public class Launcher {
 //        String nslookupHost2 = new ProcessExecutor().command("ping", TEST_DOMAIN2).readOutput(true).execute()
 //                .outputUTF8();
 
-        System.out.println(getDnsServers());
+        System.out.println(nsLookupIsSuccess(TEST_DOMAIN2));
 
+    }
+
+    private static boolean nsLookupIsSuccess(String domain) throws InterruptedException, TimeoutException,
+            IOException {
+        String pingResult = new ProcessExecutor().command("ping", "-n", "1", domain).readOutput(true).execute()
+                .outputUTF8();
+        if ( pingResult.split("\r\n").length == 1 ) return false;
+        return true;
     }
 
     private static boolean pingIsSuccess(String ipAddress) throws InterruptedException, TimeoutException, IOException {
@@ -53,22 +59,40 @@ public class Launcher {
         return gw;
     }
 
-    private static List<String> getDnsServers() throws InterruptedException, TimeoutException, IOException {
+    private static Set<String> getDnsServers() throws InterruptedException, TimeoutException, IOException {
         String dnsServers = new ProcessExecutor().command("netsh", "int", "ipv4","show","dnsservers").readOutput(true)
                 .execute().outputUTF8();
-        List<String> dnss = new LinkedList<>();
+        Set<String> dnss = new HashSet<>();
         Scanner scanner = new Scanner(dnsServers);
         scanner.useDelimiter("\n");
         while (scanner.hasNext()) {
             String str = scanner.next();
-            if (str.contains("DNS servers configured through DHCP") || str.contains("Statically Configured DNS " +
-                    "Servers")) {
+            if (str.contains("DNS servers configured through DHCP")) {
+                Scanner stringScaner = new Scanner(str);
+                IntStream.range(0, 5).forEach(i -> stringScaner.next());
+                stringScaner.useDelimiter("\r");
+                dnss.add(stringScaner.next().trim());
+                str = scanner.next();
+                if (str.contains("Register")) continue;
+                else {
+                    Scanner scane = new Scanner(str);
+                    dnss.add(scane.next().trim());
+                }
+            }
+            if (str.contains("Statically Configured DNS Servers")) {
                 Scanner stringScaner = new Scanner(str);
                 IntStream.range(0, 4).forEach(i -> stringScaner.next());
                 stringScaner.useDelimiter("\r");
                 dnss.add(stringScaner.next().trim());
+                str = scanner.next();
+                if (str.contains("Register")) continue;
+                else {
+                    Scanner scane = new Scanner(str);
+                    dnss.add(scane.next().trim());
+                }
             }
         }
+        dnss.remove("None");
         return dnss;
     }
 
