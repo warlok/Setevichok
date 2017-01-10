@@ -1,5 +1,7 @@
 package ua.dean.ui;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -8,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import ua.dean.Setevichok;
 
 import java.io.IOException;
@@ -18,11 +21,12 @@ import java.util.concurrent.TimeoutException;
 public class MainApp extends Application {
 
     private static StringProperty text = new SimpleStringProperty("Diagnostic is started");
-    private static StringBuilder sb = new StringBuilder("Getting list of gateways...");
+    private static StringBuilder sb = new StringBuilder("Diagnostic is started\n");
 
     public static void main(String[] args) throws InterruptedException, IOException, TimeoutException {
         new Thread(() -> launch(args)).start();
         Setevichok setevichok = new Setevichok();
+        sb.append("Getting list of gateways...");
         updateText();
         List<String> gateways =  setevichok.getGateways();
         sb.append("done\n");
@@ -49,6 +53,7 @@ public class MainApp extends Application {
         }
         if (gwStatus == false) {
             sb = new StringBuilder("Не доступен шлюз, обратитесь к админисратору");
+            updateText();
             return;
         }
         sb.append("done\nPing External resources...");
@@ -84,7 +89,12 @@ public class MainApp extends Application {
     }
 
     private static void updateText() {
-        text.set(sb.toString());
+        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(1), ev -> {
+            text.set(sb.toString());
+        }));
+        timeline.setCycleCount(1);
+        timeline.play();
+
     }
 
     @Override
